@@ -91,21 +91,36 @@ func UpdatePartai(c *gin.Context) {
 		return
 	}
 
-	var input struct {
-		Name          string `json:"name"`
-		EstablishDate string `json:"establish_date"`
-	}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input!"})
-		return
+	name := c.PostForm("name")
+	establishDate := c.PostForm("establish_date")
+
+	file, err := c.FormFile("logo")
+	if file != nil && err == nil {
+		ext := strings.ToLower(filepath.Ext(file.Filename))
+		if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Logo must be a valid image"})
+			return
+		}
+		timestamp := time.Now().Unix()
+		filename := fmt.Sprintf("%d_%s", timestamp, filepath.Base(file.Filename))
+		savePath := filepath.Join("media/logos", filename)
+
+		os.MkdirAll("media/logos", os.ModePerm)
+
+		if err := c.SaveUploadedFile(file, savePath); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save logo"})
+			return
+		}
+		partai.Logo = savePath
 	}
 
-	partai.Name = input.Name
-	partai.EstablishDate = input.EstablishDate
+	partai.Name = name
+	partai.EstablishDate = establishDate
+
 	config.DB.Save(&partai)
-
 	c.JSON(http.StatusOK, gin.H{"data": partai})
 }
+
 
 // DELETE /admin/partai/:id
 func DeletePartai(c *gin.Context) {
