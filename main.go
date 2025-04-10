@@ -18,6 +18,7 @@ func main() {
 	config.DB.AutoMigrate(
 		&models.Admin{},
 		&models.Party{},
+		&models.Tweet{},
 	)
 
 	seedAdmin() // call admin function

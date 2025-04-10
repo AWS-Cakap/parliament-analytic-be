@@ -25,4 +25,5 @@ func SetupRoutes(r *gin.Engine) {
 
 	r.GET("/partai", controllers.GetAllPartaiPublic)
 	r.GET("/partai/:id", controllers.GetPartaiDetailPublic)
+	r.GET("/crawl", controllers.CrawlTweets)
 }
