@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/gin-contrib/cors"
 )
 
 func main() {
@@ -27,6 +28,12 @@ func main() {
 
 	// Run routing
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // atau "*"
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	  }))
 	r.Static("/media", "./media")
 	routes.SetupRoutes(r)
 	r.Run(":8080") // run in localhost
