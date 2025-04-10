@@ -22,4 +22,7 @@ func SetupRoutes(r *gin.Engine) {
 	adminGroup.POST("/partai", controllers.CreatePartai)
 	adminGroup.PUT("/partai/:id", controllers.UpdatePartai)
 	adminGroup.DELETE("/partai/:id", controllers.DeletePartai)
+
+	r.GET("/partai", controllers.GetAllPartaiPublic)
+	r.GET("/partai/:id", controllers.GetPartaiDetailPublic)
 }

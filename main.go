@@ -26,6 +26,7 @@ func main() {
 
 	// Run routing
 	r := gin.Default()
+	r.Static("/media", "./media")
 	routes.SetupRoutes(r)
 	r.Run(":8080") // run in localhost
 }
@@ -41,7 +42,7 @@ func seedAdmin() {
 			Password: string(hashedPassword),
 		}
 		config.DB.Create(&admin)
-		fmt.Println("✅ Admin has been created: admin/admin123")
+		fmt.Println("Admin has been created: admin/admin123")
 	} else {
 		fmt.Println("Default Admin already exists")
 	}
