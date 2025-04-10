@@ -1,7 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"parliament-analytic-be/config"
 	"parliament-analytic-be/models"
 
@@ -30,21 +36,47 @@ func GetPartaiByID(c *gin.Context) {
 
 // POST /admin/partai
 func CreatePartai(c *gin.Context) {
-	var input struct {
-		Name          string `json:"name"`
-		EstablishDate string `json:"establish_date"`
-	}
+	name := c.PostForm("name")
+	establishDate := c.PostForm("establish_date")
 
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input!"})
+	// Get logo file
+	file, err := c.FormFile("logo")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Logo is required"})
 		return
 	}
 
-	partai := models.Party{
-		Name:          input.Name,
-		EstablishDate: input.EstablishDate,
+	// Validate file extension
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Logo must be a .jpg, .jpeg, or .png image"})
+		return
 	}
-	config.DB.Create(&partai)
+
+	// Create filename
+	timestamp := time.Now().Unix()
+	filename := fmt.Sprintf("%d_%s", timestamp, filepath.Base(file.Filename))
+	savePath := filepath.Join("media/logos", filename)
+
+	// Create directory (if not exist)
+	os.MkdirAll("media/logos", os.ModePerm)
+
+	// Save file
+	if err := c.SaveUploadedFile(file, savePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save logo"})
+		return
+	}
+
+	// Save to database
+	partai := models.Party{
+		Name:          name,
+		EstablishDate: establishDate,
+		Logo:          savePath,
+	}
+	if err := config.DB.Create(&partai).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create partai"})
+		return
+	}
 
 	c.JSON(http.StatusCreated, gin.H{"data": partai})
 }
